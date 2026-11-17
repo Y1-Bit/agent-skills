@@ -1,0 +1,18 @@
+id: thin-routes
+language: python
+severity: error
+message: "Routes/handlers at the edge must not catch exceptions or branch on business rules."
+note: |
+  An edge handler is: parse input → call ONE use case → serialize output.
+  Errors go to the central error handler. Business conditions belong in the
+  aggregate or the use case.
+files:
+  - "src/app/entrypoints/**/routes*.py"
+  - "src/app/entrypoints/**/handlers*.py"
+rule:
+  any:
+    - kind: try_statement
+    - kind: if_statement
+      inside:
+        kind: function_definition
+        stopBy: end

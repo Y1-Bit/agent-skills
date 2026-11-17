@@ -1,0 +1,84 @@
+id: no-try-in-core
+valid:
+  - |
+    def withdraw(self) -> None:
+        self._ensure_active()
+        self.status = BookStatus.WITHDRAWN
+invalid:
+  - |
+    def withdraw(self) -> None:
+        try:
+            self._ensure_active()
+        except BookWithdrawnError:
+            return
+---
+id: domain-errors-only
+valid:
+  - raise BookWithdrawnError(self.id)
+  - raise InvalidValueError(field="name", reason="blank")
+invalid:
+  - raise ValueError("public_id must be provided")
+  - raise ValueError(msg)
+  - raise RuntimeError
+---
+id: no-escape-hatch-comments
+valid:
+  - "x = compute()  # explains a non-obvious why"
+invalid:
+  - "x = compute()  # noqa: PLR0915"
+  - "x = compute()  # type: ignore[arg-type]"
+  - "if debug:  # pragma: no cover"
+---
+id: thin-routes
+valid:
+  - |
+    async def register(body: Req, c: ContainerDep) -> dict[str, str]:
+        book_id = await c.catalog_book()(body.to_command())
+        return {"id": str(book_id)}
+invalid:
+  - |
+    async def register(body: Req, c: ContainerDep) -> dict[str, str]:
+        try:
+            book_id = await c.catalog_book()(body.to_command())
+        except DuplicateBookError:
+            raise HTTPException(409)
+        return {"id": str(book_id)}
+  - |
+    async def get(book_id: str, c: ContainerDep) -> BookResponse:
+        book = await c.books.get(book_id)
+        if not book.is_active:
+            raise HTTPException(410)
+        return BookResponse.from_domain(book)
+---
+id: no-bool-flag-pairs
+valid:
+  - |
+    class Book:
+        status: BookStatus
+        illustrated: bool
+  - |
+    class Book:
+        is_active: bool
+        name: str
+invalid:
+  - |
+    class Book:
+        name: str
+        is_active: bool
+        is_deleted: bool
+---
+id: commit-only-in-uow
+valid:
+  - |
+    @logged
+    @transactional
+    async def __call__(self, command: CatalogBook) -> BookId:
+        await self.uow.books.add(book)
+invalid:
+  - |
+    async def __call__(self, command: CatalogBook) -> BookId:
+        await self.session.add(book)
+        await self.session.commit()
+  - |
+    except Exception:
+        session.rollback()

@@ -1,0 +1,13 @@
+id: no-escape-hatch-comments
+language: python
+severity: error
+message: "Fix the cause instead of silencing the checker."
+note: |
+  `# noqa` / `# type: ignore` / `# pragma: no cover` in production code are
+  how agents justify not doing the right thing. If a rule is genuinely wrong
+  for a whole module, change pyproject.toml (per-file-ignores) in a reviewed PR.
+files:
+  - "src/**/*.py"
+rule:
+  kind: comment
+  regex: "(noqa|type:\\s*ignore|pragma:\\s*no\\s*cover)"

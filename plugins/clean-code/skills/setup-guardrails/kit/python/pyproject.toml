@@ -1,0 +1,137 @@
+[project]
+name = "app"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["fastapi>=0.115", "pydantic>=2.8", "structlog>=24", "aiogram>=3.13"]
+
+[dependency-groups]
+dev = ["ruff>=0.15", "mypy>=1.13", "import-linter>=2.1", "ast-grep-cli>=0.30", "pytest>=8", "pytest-asyncio>=0.24", "pytest-cov>=6", "httpx>=0.27", "hypothesis>=6.100", "mutmut>=3.3"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/app"]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# RUFF — "ALL" + a short, justified ignore list. Thresholds are deliberately
+# tight: agents will happily write 60-line functions unless physically blocked.
+# ─────────────────────────────────────────────────────────────────────────────
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+extend-exclude = ["examples/bad", "mutants"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+# Preview rules run only when named here: interface width and nesting depth.
+preview = true
+explicit-preview-rules = true
+extend-select = ["PLR0904", "PLR1702"]
+ignore = [
+    "D",       # docstrings: names + types should carry the meaning; enable D1 later if you want API docs
+    "COM812",  # conflicts with the formatter
+    "ISC001",  # conflicts with the formatter
+    "CPY",     # copyright headers
+    "TD002", "TD003",  # TODO author/link — we ban TODOs via FIX002 anyway
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 6           # C901: one function = one idea
+
+[tool.ruff.lint.pylint]
+max-args = 5                 # PLR0913: more args → introduce a value object / command
+max-positional-args = 2      # PLR0917: force keyword-only beyond that
+max-branches = 6             # PLR0912
+max-statements = 20          # PLR0915: the closest thing to "max function length"
+max-returns = 3              # PLR0911
+max-bool-expr = 3            # PLR0916
+max-nested-blocks = 3        # PLR1702 (preview)
+max-public-methods = 10      # PLR0904 (preview): a wider class or Protocol serves several consumers
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"datetime.datetime.now".msg = "Inject a Clock port instead of reading global time (testability)."
+"datetime.datetime.utcnow".msg = "Naive datetime. Inject a Clock port that returns tz-aware UTC."
+"typing.Any".msg = "Model the type. If it is truly dynamic, use `object` and narrow it."
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S106", "PLR2004", "ANN201", "INP001", "ARG002"]  # asserts, fake tokens, fakes ignoring args
+"src/app/*/infrastructure/**" = ["TID251"]  # adapters may touch the real clock
+"src/app/entrypoints/**" = ["B008"]         # FastAPI Depends() in defaults is idiomatic
+"scripts/**" = ["T201", "INP001", "S603"]  # dev scripts: print + fixed-argv subprocess
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+docstring-code-format = true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MYPY — strict. Agents get types wrong silently; the type checker doesn't.
+# ─────────────────────────────────────────────────────────────────────────────
+[tool.mypy]
+strict = true
+python_version = "3.12"
+mypy_path = "src"
+packages = ["app"]
+exclude = ["mutants/"]
+warn_unreachable = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool", "possibly-undefined"]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# IMPORT-LINTER — architecture as code. Copy the per-context blocks for every
+# new bounded context and add the context to the independence contract.
+# ─────────────────────────────────────────────────────────────────────────────
+[tool.importlinter]
+root_packages = ["app"]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Global layers: entrypoints → contexts → shared"
+type = "layers"
+layers = ["app.entrypoints", "app.books", "app.shared"]
+
+[[tool.importlinter.contracts]]
+name = "Bounded-context layers: infrastructure → application → domain"
+type = "layers"
+containers = ["app.books"]
+layers = ["infrastructure", "application", "domain"]
+
+[[tool.importlinter.contracts]]
+name = "Domain and application stay framework-free"
+type = "forbidden"
+source_modules = ["app.books.domain", "app.books.application", "app.shared"]
+forbidden_modules = ["fastapi", "pydantic", "starlette", "aiogram"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+norecursedirs = [".*", "*.egg", "build", "dist", "mutants", "examples"]
+addopts = ["--cov=app", "--cov-branch", "--cov-report=term-missing:skip-covered", "--no-cov-on-fail"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TEST QUALITY — coverage says code RAN; mutation testing says tests would
+# NOTICE if it broke. Agents write lots of tests that assert nothing.
+# ─────────────────────────────────────────────────────────────────────────────
+[tool.coverage.run]
+branch = true
+source = ["app"]
+omit = ["*/__main__.py"]  # process entry points: covered by running the app, not unit tests
+
+[tool.coverage.report]
+fail_under = 95
+exclude_also = ["if TYPE_CHECKING:", "\\.\\.\\.$"]
+
+[tool.mutmut]
+source_paths = ["src/app/books/domain/", "src/app/shared/domain/"]
+pytest_add_cli_args_test_selection = ["tests/unit/"]
+also_copy = ["src/app/__init__.py", "src/app/books/__init__.py", "src/app/books/application/", "src/app/books/infrastructure/", "src/app/shared/__init__.py", "src/app/shared/application/", "tests/"]
+pytest_add_cli_args = ["-p", "no:cacheprovider", "--no-cov"]
+

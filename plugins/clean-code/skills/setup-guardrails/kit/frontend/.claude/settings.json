@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [{ "type": "command", "command": "npx prettier --write --log-level silent src && npx eslint src --fix --quiet || true" }]
+      }
+    ],
+    "Stop": [
+      { "hooks": [{ "type": "command", "command": "./scripts/agent-gate.sh" }] }
+    ]
+  }
+}

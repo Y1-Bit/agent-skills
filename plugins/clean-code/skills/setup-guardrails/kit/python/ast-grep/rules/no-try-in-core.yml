@@ -1,0 +1,18 @@
+id: no-try-in-core
+language: python
+severity: error
+message: "Do not catch exceptions in domain/application code."
+note: |
+  Raise a DomainError subclass and let it propagate. The single error handler
+  at the edge (entrypoints/http/error_handlers.py, bot middleware, CLI) maps
+  error categories to responses. If you need cleanup, use a context manager.
+  If an adapter's exception must become a domain error, translate it inside
+  infrastructure/, not here.
+files:
+  - "src/**/domain/**/*.py"
+  - "src/**/application/**/*.py"
+  - "src/app/shared/**/*.py"
+ignores:
+  - "src/app/shared/application/decorators.py"  # the sanctioned place for cross-cutting try/finally
+rule:
+  kind: try_statement

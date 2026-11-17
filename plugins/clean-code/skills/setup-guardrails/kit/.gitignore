@@ -1,0 +1,10 @@
+.venv/
+node_modules/
+__pycache__/
+.*_cache/
+*.egg-info/
+mutants/
+.hypothesis/
+.coverage
+.stryker-tmp/
+reports/

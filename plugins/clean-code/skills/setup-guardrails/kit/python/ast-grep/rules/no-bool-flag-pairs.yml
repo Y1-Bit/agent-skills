@@ -1,0 +1,25 @@
+id: no-bool-flag-pairs
+language: python
+severity: error
+message: "Several `is_*`/`has_*` bool fields on one class → model the state as an enum."
+note: |
+  `is_active` + `is_deleted` allows the illegal combination (active AND deleted).
+  A `status: BookStatus` field makes illegal states unrepresentable.
+  Derived read-only properties (`@property def is_active`) are fine.
+files:
+  - "src/**/domain/**/*.py"
+rule:
+  kind: expression_statement
+  has:
+    pattern: "$B: bool"
+  follows:
+    kind: expression_statement
+    has:
+      pattern: "$A: bool"
+    stopBy: end
+  inside:
+    kind: class_definition
+    stopBy: end
+constraints:
+  A: { regex: "^(is|has)_" }
+  B: { regex: "^(is|has)_" }

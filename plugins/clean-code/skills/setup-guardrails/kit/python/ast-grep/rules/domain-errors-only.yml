@@ -1,0 +1,19 @@
+id: domain-errors-only
+language: python
+severity: error
+message: "Raise a DomainError subclass, not a built-in exception."
+note: |
+  Built-ins (ValueError, RuntimeError...) carry no category, so the edge
+  handler can't map them to a status code and they surface as 500s.
+  Use InvalidValueError / NotFoundError / ConflictError / RuleViolationError,
+  or a specific subclass of them in <context>/domain/errors.py.
+files:
+  - "src/**/domain/**/*.py"
+  - "src/**/application/**/*.py"
+rule:
+  any:
+    - pattern: raise $E($$$)
+    - pattern: raise $E
+constraints:
+  E:
+    regex: ^(Exception|ValueError|TypeError|RuntimeError|KeyError|AssertionError|NotImplementedError)$

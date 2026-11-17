@@ -1,0 +1,7 @@
+# Kit dependencies and caches if someone runs a kit in place
+node_modules/
+.venv/
+__pycache__/
+.*_cache/
+.env
+.env.*

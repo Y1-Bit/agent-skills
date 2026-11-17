@@ -1,0 +1,13 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "y1-skills",
+  "description": "Claude Code skills that make coding agents write clean, layered code; they grow with every project.",
+  "owner": { "name": "Y1-Bit", "url": "https://github.com/Y1-Bit" },
+  "plugins": [
+    {
+      "name": "clean-code",
+      "description": "Skills for clean, agent-written code: guardrails setup and a refactor pass.",
+      "source": "./plugins/clean-code"
+    }
+  ]
+}

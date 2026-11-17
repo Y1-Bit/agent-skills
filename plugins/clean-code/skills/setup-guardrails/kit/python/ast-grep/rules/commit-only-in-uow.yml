@@ -1,0 +1,17 @@
+id: commit-only-in-uow
+language: python
+severity: error
+message: "Don't commit/rollback by hand. Decorate the use case with @transactional."
+note: |
+  Transactions are opened and committed in ONE place: the `@transactional`
+  decorator around the handler (app/shared/application/decorators.py).
+  Leaving the UoW block without commit rolls back automatically.
+files:
+  - "src/**/*.py"
+ignores:
+  - "src/app/shared/application/decorators.py"
+  - "src/**/infrastructure/**"
+rule:
+  any:
+    - pattern: $X.commit()
+    - pattern: $X.rollback()

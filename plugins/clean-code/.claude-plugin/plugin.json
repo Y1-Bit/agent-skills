@@ -1,0 +1,5 @@
+{
+  "name": "clean-code",
+  "description": "Guardrails setup and refactor pass for clean, agent-written code. No version field: every commit on main is a new version.",
+  "author": { "name": "Y1-Bit", "url": "https://github.com/Y1-Bit" }
+}
