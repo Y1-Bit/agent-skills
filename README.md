@@ -3,8 +3,9 @@
 Claude Code skills that make coding agents write clean, layered code. Instead of longer
 prompts, they turn recurring review corrections into deterministic checks: strict linters,
 architecture rules, a single definition of done and a Stop-hook gate, plus a behavior-preserving
-refactor pass. Each skill grows with the projects it is used in: a missing or wrong rule found
-in real projects comes back as a general lesson and a check.
+refactor pass and a docs sync that keeps Markdown docs in line with the code. Each skill grows
+with the projects it is used in: a missing or wrong rule found in real projects comes back as a
+general lesson and a check.
 
 ## Plugins and skills
 
@@ -18,6 +19,12 @@ of one theme; a skill shows up in a session as `<plugin>:<skill>`.
 | `clean-code:setup-guardrails` | Sets up deterministic checks in a project: strict linters and type checking, layer and feature-slice contracts, narrow-interface and size limits, custom ast-grep/ESLint rules, one check command, a Stop-hook gate and a short AGENTS.md. References and a working kit for Python and TypeScript/React; a method for other stacks. | Starting a project, adding agents to an existing one, or the same correction to an agent keeps coming back. |
 | `clean-code:refactor-pass` | Cleans up code an agent wrote after the feature works, without changing behavior: value objects, grouped parameters, enums instead of flag pairs, errors at one edge, smaller functions. | A feature works and its branch needs a senior-level cleanup before review. |
 
+### `docs`
+
+| Skill | What it does | Use it when |
+|---|---|---|
+| `docs:sync-docs` | Checks a project's Markdown docs against the code: a stdlib script finds dead links and anchors, missing paths, scripts, env vars and symbols, version mismatches and stale notes (gate-ready exit code); then the agent reads docs against code, reports drift with evidence, applies only mechanical fixes and proposes the rest. Dated records are never rewritten. | Docs seem out of date, after a feature or merge, or before handing a repo to someone new. |
+
 ## Install
 
 Needs Claude Code 2.1.273+. The repository is public, so no token or login is needed.
@@ -25,6 +32,7 @@ Needs Claude Code 2.1.273+. The repository is public, so no token or login is ne
 ```bash
 claude plugin marketplace add Y1-Bit/agent-skills
 claude plugin install clean-code@y1-skills
+claude plugin install docs@y1-skills
 ```
 
 Then turn on auto-update for the marketplace: in `~/.claude/settings.json` add
@@ -35,7 +43,7 @@ session start; a new version applies in the next session or after `/reload-plugi
 Manual update at any time:
 
 ```bash
-claude plugin marketplace update y1-skills && claude plugin update clean-code@y1-skills
+claude plugin marketplace update y1-skills && claude plugin update clean-code@y1-skills && claude plugin update docs@y1-skills
 ```
 
 `plugin.json` has no `version`, so the installed version is the commit SHA and every commit on
