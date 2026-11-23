@@ -1,0 +1,5 @@
+{
+  "name": "docs",
+  "description": "Keep a project's Markdown docs in line with its code: deterministic drift checks and a sync pass. No version field: every commit on main is a new version.",
+  "author": { "name": "Y1-Bit", "url": "https://github.com/Y1-Bit" }
+}
